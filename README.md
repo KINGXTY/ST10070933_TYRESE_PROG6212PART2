@@ -25,3 +25,6 @@ CREATE TABLE SupportingDocuments (
     UploadDate DATETIME DEFAULT GETDATE(), -- Automatically set the upload date
     FOREIGN KEY (ClaimId) REFERENCES Claims(Id) -- Foreign key constraint linking to Claims table
 );
+These will create the tables needed for the database 
+
+Then you run the the web application and it should work 
