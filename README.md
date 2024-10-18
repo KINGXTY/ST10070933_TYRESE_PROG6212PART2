@@ -15,4 +15,13 @@ CREATE TABLE Claims (
     Status NVARCHAR(50) DEFAULT 'Pending', -- Status default to 'Pending'
     SubmissionDate DATETIME DEFAULT GETDATE() -- Automatically set the submission date
 );
-
+CREATE TABLE SupportingDocuments (
+    Id INT IDENTITY(1,1) PRIMARY KEY,    -- Auto-incrementing primary key
+    ClaimId INT NOT NULL,                -- Foreign key to Claims table
+    FileName NVARCHAR(255) NOT NULL,     -- Name of the uploaded file
+    FilePath NVARCHAR(MAX) NOT NULL,     -- Path where the file is stored
+    ContentType NVARCHAR(100) NOT NULL,  -- Type of file (e.g., pdf, docx)
+    FileSize BIGINT NOT NULL,            -- File size in bytes
+    UploadDate DATETIME DEFAULT GETDATE(), -- Automatically set the upload date
+    FOREIGN KEY (ClaimId) REFERENCES Claims(Id) -- Foreign key constraint linking to Claims table
+);
