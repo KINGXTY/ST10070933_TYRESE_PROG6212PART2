@@ -1,0 +1,130 @@
+﻿@model IEnumerable<Claim>
+
+@{
+    // Helper function to get the status color
+    string GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pending" => "warning",
+            "approved" => "success",
+            "rejected" => "danger",
+            _ => "secondary"
+        };
+    }
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Review Claims</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Lecturer</th>
+                            <th>Hours</th>
+                            <th>Rate</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Documents</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var claim in Model)
+                        {
+                            <tr data-claim-id="@claim.Id">
+                                <td>@claim.LecturerId</td>
+                                <td>@claim.HoursWorked</td>
+                                <td>@claim.HourlyRate.ToString("C")</td>
+                                <td>@((claim.HoursWorked * claim.HourlyRate).ToString("C"))</td>
+                                <td>
+                                    <span class="badge bg-@GetStatusColor(claim.Status)">
+                                        @claim.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (claim.Documents != null && claim.Documents.Any())
+                                    {
+                                        <button class="btn btn-sm btn-info" onclick="viewDocuments(@claim.Id)">
+                                            View (@claim.Documents.Count)
+                                        </button>
+                                    }
+                                </td>
+                                <td>
+                                    @if (claim.Status == "Pending")
+                                    {
+                                        <div class="btn-group">
+                                            <button class="btn btn-success btn-sm" onclick="reviewClaim(@claim.Id, 'approve')">
+                                                Approve
+                                            </button>
+                                            <button class="btn btn-danger btn-sm" onclick="reviewClaim(@claim.Id, 'reject')">
+                                                Reject
+                                            </button>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function reviewClaim(id, action) {
+            let notes = '';
+            if (action === 'reject') {
+                notes = prompt('Please provide a reason for rejection:');
+                if (notes === null) return; // User cancelled
+            }
+
+            $.ajax({
+                url: '@Url.Action("Review")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    action: action,
+                    notes: notes // Notes can still be sent if required, but not stored
+                },
+                success: function (result) {
+                    if (result.success) {
+                        // Update the status badge
+                        const row = $(`tr[data-claim-id="${id}"]`);
+                        const statusCell = row.find('td:nth-child(5)');
+                        statusCell.html(`<span class="badge bg-${getStatusColor(result.status)}">${result.status}</span>`);
+
+                        // Remove action buttons
+                        row.find('.btn-group').remove();
+
+                        // Show success message
+                        alert(`Claim ${action}d successfully`);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while processing the request');
+                }
+            });
+        }
+
+        function getStatusColor(status) {
+            switch (status.toLowerCase()) {
+                case 'pending': return 'warning';
+                case 'approved': return 'success';
+                case 'rejected': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function viewDocuments(claimId) {
+            // Implement document viewing functionality
+            window.location.href = '@Url.Action("Documents")/' + claimId;
+        }
+    </script>
+}
